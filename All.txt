@@ -542,487 +542,380 @@ predict(['we', 'are', 'to', 'study'])
 
 24. predict(['processes', 'manipulate', 'things', 'study'])
 ******************************************************************************************************************************************************************************************
-# example of using a pre-trained model as a classifier
-from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.preprocessing.image import img_to_array
-from keras.applications.vgg16 import preprocess_input
-from keras.applications.vgg16 import decode_predictions
-from keras.applications.vgg16 import VGG16
-# load an image from file
-image = load_img('Castle.jpg', target_size=(224, 224))
-# convert the image pixels to a numpy array
-image = img_to_array(image)
-# reshape data for the model
-image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
-# prepare the image for the VGG model
-image = preprocess_input(image)
-# load the model
-model = VGG16()
-# predict the probability across all output classes
-yhat = model.predict(image)
-# convert the probabilities to class labels
-label = decode_predictions(yhat)
-# retrieve the most likely result, e.g. highest probability
-label = label[0][0]
-# print the classification
-print('%s (%.2f%%)' % (label[1], label[2]*100))
-
-# load an image from file
-image = load_img('Valley.jpg', target_size=(224, 224))
-# convert the image pixels to a numpy array
-image = img_to_array(image)
-# reshape data for the model
-image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
-# prepare the image for the VGG model
-image = preprocess_input(image)
-# load the model
-model = VGG16()
-# predict the probability across all output classes
-yhat = model.predict(image)
-# convert the probabilities to class labels
-label = decode_predictions(yhat)
-# retrieve the most likely result, e.g. highest probability
-label = label[0][0]
-# print the classification
-print('%s (%.2f%%)' % (label[1], label[2]*100))
-
-# load an image from file
-image = load_img('Golden_Retriever.jpg', target_size=(224, 224))
-# convert the image pixels to a numpy array
-image = img_to_array(image)
-# reshape data for the model
-image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
-# prepare the image for the VGG model
-image = preprocess_input(image)
-# load the model
-model = VGG16()
-# predict the probability across all output classes
-yhat = model.predict(image)
-# convert the probabilities to class labels
-label = decode_predictions(yhat)
-# retrieve the most likely result, e.g. highest probability
-label = label[0][0]
-# print the classification
-print('%s (%.2f%%)' % (label[1], label[2]*100))
-******************************************************************************************************************************************************************************************
-PR-6 object Detection_gayatri
-
-%pip install ultralytics
-
-from ultralytics import YOLO
-import matplotlib.pyplot as plt
-import cv2
-
-print("All libraries imported successfully!")
-
-
-import sys
-print(sys.executable)
-
-
-import sys
-!{sys.executable} -m pip install ultralytics
-
-%pip install ultralytics matplotlib opencv-python
-
-from ultralytics import YOLO
-import matplotlib.pyplot as plt
-import cv2
-
-model = YOLO("yolo11n.pt")
-
-results = model.train(
-    data=r"C:\Users\Sairam\OneDrive\Desktop\IT\dataset\data.yaml",
-    epochs=10,
-    imgsz=640,
-    batch=8,
-    name="bird_cat_dog_detection"
-)
-
-results = model.train(
-    data=r"C:\Users\Sairam\OneDrive\Desktop\IT\dataset\data.yaml",
-    epochs=10,
-    imgsz=640,
-    batch=8,
-    name="bird_cat_dog_detection"
-)
-
-best_model = YOLO(
-    "runs/detect/bird_cat_dog_detection/weights/best.pt"
-)
-
-print("Best model loaded successfully!")
-
-
-metrics = best_model.val(
-    data=str(DATA_YAML),
-    split="val"
-)
-
-print("Validation completed!")
-
-print("Precision:", metrics.box.mp)
-print("Recall:", metrics.box.mr)
-print("mAP50:", metrics.box.map50)
-print("mAP50-95:", metrics.box.map)
-
-from pathlib import Path
-
-TEST_IMAGES = DATASET_PATH / "test" / "images"
-
-if TEST_IMAGES.exists():
-    image_files = [
-        p for p in TEST_IMAGES.iterdir()
-        if p.suffix.lower() in [".jpg", ".jpeg", ".png", ".bmp"]
-    ]
-else:
-    image_files = []
-
-print("Images found:", len(image_files))
-print(image_files[:5])
-
-image_path = str(image_files[0])
-
-prediction_results = best_model.predict(
-    source=image_path,
-    conf=0.25,
-    save=True
-)
-
-print("Prediction completed!")
-
-
-import matplotlib.pyplot as plt
-import cv2
-
-for result in prediction_results:
-    annotated_image = result.plot()
-
-    annotated_image = cv2.cvtColor(
-        annotated_image,
-        cv2.COLOR_BGR2RGB
-    )
-
-    plt.figure(figsize=(10, 8))
-    plt.imshow(annotated_image)
-    plt.axis("off")
-    plt.title("Bird, Cat and Dog Object Detection")
-    plt.show()
-********************************************************************************************************************************************************************************
-
-import tensorflow as tf
+DL 6
+1.
+import os
+import shutil
+import random
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms, models
 
+print("PyTorch:", torch.__version__)
+print("GPU Available:", torch.cuda.is_available())
 
-# =========================================================
-# 1. PARAMETERS
-# =========================================================
+2.
+dataset_root = "/content/caltech101"
 
-IMG_SIZE = (128, 128)
-BATCH_SIZE = 32
-
-BASE_PATH = r"C:\Users\Sairam\OneDrive\Desktop\IT\dataset"
-
-TRAIN_PATH = BASE_PATH + r"\train"
-VALIDATION_PATH = BASE_PATH + r"\validation"
-TEST_PATH = BASE_PATH + r"\test"
-
-
-# =========================================================
-# 2. DATA PREPROCESSING
-# =========================================================
-
-train_datagen = ImageDataGenerator(
-    rescale=1.0 / 255,
-    rotation_range=20,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    horizontal_flip=True
+caltech_dataset = datasets.Caltech101(
+    root=dataset_root,
+    download=True
 )
 
-validation_datagen = ImageDataGenerator(
-    rescale=1.0 / 255
+source_root = os.path.join(
+    dataset_root, "caltech101", "101_ObjectCategories"
 )
 
-test_datagen = ImageDataGenerator(
-    rescale=1.0 / 255
-)
+print("Dataset Downloaded:", len(caltech_dataset))
+
+3.
+base_dir = "/content/caltech_split"
+
+train_dir = os.path.join(base_dir, "train")
+valid_dir = os.path.join(base_dir, "valid")
+test_dir = os.path.join(base_dir, "test")
+
+if os.path.exists(base_dir):
+    shutil.rmtree(base_dir)
+
+for folder in [train_dir, valid_dir, test_dir]:
+    os.makedirs(folder)
+
+random.seed(42)
+
+classes = sorted([
+    d for d in os.listdir(source_root)
+    if os.path.isdir(os.path.join(source_root, d))
+])
+
+for class_name in classes:
+
+    class_path = os.path.join(source_root, class_name)
+
+    images = [
+        f for f in os.listdir(class_path)
+        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+    ]
+
+    random.shuffle(images)
+
+    n = len(images)
+    train_end = int(0.50 * n)
+    valid_end = int(0.75 * n)
+
+    splits = {
+        train_dir: images[:train_end],
+        valid_dir: images[train_end:valid_end],
+        test_dir: images[valid_end:]
+    }
+
+    for folder, files in splits.items():
+
+        os.makedirs(os.path.join(folder, class_name))
+
+        for image in files:
+            shutil.copy2(
+                os.path.join(class_path, image),
+                os.path.join(folder, class_name, image)
+            )
+
+print("Dataset Split Completed!")
+
+4.
+image_transforms = {
+
+    "train": transforms.Compose([
+        transforms.RandomResizedCrop(256, scale=(0.8, 1.0)),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(),
+        transforms.RandomHorizontalFlip(),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.485, 0.456, 0.406],
+            [0.229, 0.224, 0.225]
+        )
+    ]),
+
+    "valid": transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.485, 0.456, 0.406],
+            [0.229, 0.224, 0.225]
+        )
+    ]),
+
+    "test": transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.485, 0.456, 0.406],
+            [0.229, 0.224, 0.225]
+        )
+    ])
+}
+
+5.
+data = {
+    "train": datasets.ImageFolder(train_dir, transform=image_transforms["train"]),
+    "valid": datasets.ImageFolder(valid_dir, transform=image_transforms["valid"]),
+    "test": datasets.ImageFolder(test_dir, transform=image_transforms["test"])
+}
+
+batch_size = 32
+
+dataloaders = {
+    "train": DataLoader(data["train"], batch_size=batch_size, shuffle=True, num_workers=2),
+    "valid": DataLoader(data["valid"], batch_size=batch_size, shuffle=False, num_workers=2),
+    "test": DataLoader(data["test"], batch_size=batch_size, shuffle=False, num_workers=2)
+}
 
+class_names = data["train"].classes
+n_classes = len(class_names)
 
-# =========================================================
-# 3. LOAD TRAINING DATA
-# =========================================================
+print("Number of Classes:", n_classes)
+print("Training Images:", len(data["train"]))
+print("Validation Images:", len(data["valid"]))
+print("Testing Images:", len(data["test"]))
 
-train_data = train_datagen.flow_from_directory(
-    TRAIN_PATH,
-    target_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    class_mode="categorical",
-    shuffle=True
-)
 
+6.
+images, labels = next(iter(dataloaders["train"]))
 
-# =========================================================
-# 4. LOAD VALIDATION DATA
-# =========================================================
+plt.figure(figsize=(10, 6))
 
-validation_data = validation_datagen.flow_from_directory(
-    VALIDATION_PATH,
-    target_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    class_mode="categorical",
-    shuffle=False
-)
+for i in range(8):
+    image = images[i].permute(1, 2, 0).numpy()
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
 
+    image = np.clip(image * std + mean, 0, 1)
 
-# =========================================================
-# 5. LOAD TEST DATA
-# =========================================================
+    plt.subplot(2, 4, i + 1)
+    plt.imshow(image)
+    plt.title(class_names[labels[i]])
+    plt.axis("off")
 
-test_data = test_datagen.flow_from_directory(
-    TEST_PATH,
-    target_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    class_mode="categorical",
-    shuffle=False
-)
-
-
-# =========================================================
-# 6. NUMBER OF CLASSES
-# =========================================================
-
-num_classes = train_data.num_classes
-
-print("\nNumber of classes:", num_classes)
-print("Class names:", train_data.class_indices)
-
-
-# =========================================================
-# 7. LOAD PRE-TRAINED MOBILENETV2
-# =========================================================
-
-base_model = MobileNetV2(
-    weights="imagenet",
-    include_top=False,
-    input_shape=(128, 128, 3)
-)
-
-
-# =========================================================
-# 8. FREEZE PRE-TRAINED CNN LAYERS
-# =========================================================
-
-base_model.trainable = False
-
-
-# =========================================================
-# 9. ADD CUSTOM CLASSIFIER
-# =========================================================
-
-x = base_model.output
-
-x = GlobalAveragePooling2D()(x)
-
-x = Dense(
-    128,
-    activation="relu"
-)(x)
-
-x = Dropout(0.5)(x)
-
-output = Dense(
-    num_classes,
-    activation="softmax"
-)(x)
-
-
-# =========================================================
-# 10. CREATE FINAL MODEL
-# =========================================================
-
-model = Model(
-    inputs=base_model.input,
-    outputs=output
-)
-
-
-# =========================================================
-# 11. COMPILE MODEL
-# =========================================================
-
-model.compile(
-    optimizer=Adam(learning_rate=0.001),
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
-)
-
-
-# =========================================================
-# 12. DISPLAY MODEL
-# =========================================================
-
-model.summary()
-
-model.compile(optimizer='adam',loss='categorical_crossentropy', metrics=['accuracy'])
-# =========================================================
-# 13. TRAIN CUSTOM CLASSIFIER
-# =========================================================
-
-history1 = model.fit(
-    train_data,
-    validation_data=validation_data,
-    epochs=5
-)
-
-
-# =========================================================
-# 14. EVALUATE BEFORE FINE-TUNING
-# =========================================================
-
-test_loss1, test_accuracy1 = model.evaluate(test_data)
-
-print("\nTest Loss Before Fine-Tuning:",
-      test_loss1)
-
-print("Test Accuracy Before Fine-Tuning:",
-      test_accuracy1)
-
-
-# =========================================================
-# 15. FINE-TUNING
-# =========================================================
-
-base_model.trainable = True
-
-
-# Freeze all layers except last 20 layers
-
-for layer in base_model.layers[:-20]:
-    layer.trainable = False
-
-
-# =========================================================
-# 16. RECOMPILE WITH SMALL LEARNING RATE
-# =========================================================
-
-model.compile(
-    optimizer=Adam(learning_rate=0.0001),
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
-)
-
-
-# =========================================================
-# 17. FINE-TUNE MODEL
-# =========================================================
-
-history2 = model.fit(
-    train_data,
-    validation_data=validation_data,
-    epochs=5
-)
-
-
-# =========================================================
-# 18. FINAL EVALUATION
-# =========================================================
-
-test_loss2, test_accuracy2 = model.evaluate(test_data)
-
-print("\nFinal Test Loss:",
-      test_loss2)
-
-print("Final Test Accuracy:",
-      test_accuracy2)
-
-
-# =========================================================
-# 19. COMBINE TRAINING HISTORY
-# =========================================================
-
-accuracy = history1.history["accuracy"] + \
-           history2.history["accuracy"]
-
-val_accuracy = history1.history["val_accuracy"] + \
-               history2.history["val_accuracy"]
-
-loss = history1.history["loss"] + \
-       history2.history["loss"]
-
-val_loss = history1.history["val_loss"] + \
-           history2.history["val_loss"]
-
-
-# =========================================================
-# 20. PLOT ACCURACY
-# =========================================================
-
-plt.figure(figsize=(8, 5))
-
-plt.plot(
-    accuracy,
-    label="Training Accuracy"
-)
-
-plt.plot(
-    val_accuracy,
-    label="Validation Accuracy"
-)
-
-plt.axvline(
-    x=4,
-    linestyle="--",
-    label="Fine-Tuning Starts"
-)
-
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-
-plt.title(
-    "MobileNetV2 Transfer Learning Accuracy"
-)
-
-plt.legend()
+plt.tight_layout()
 plt.show()
 
+7.
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# =========================================================
-# 21. PLOT LOSS
-# =========================================================
+weights = models.VGG16_Weights.DEFAULT
+model = models.vgg16(weights=weights)
 
-plt.figure(figsize=(8, 5))
+for param in model.parameters():
+    param.requires_grad = False
 
-plt.plot(
-    loss,
-    label="Training Loss"
+n_inputs = model.classifier[6].in_features
+
+model.classifier[6] = nn.Sequential(
+    nn.Linear(n_inputs, 256),
+    nn.ReLU(),
+    nn.Dropout(0.4),
+    nn.Linear(256, n_classes),
+    nn.LogSoftmax(dim=1)
 )
 
-plt.plot(
-    val_loss,
-    label="Validation Loss"
+model = model.to(device)
+
+print("VGG16 Model Loaded Successfully!")
+
+8.
+criterion = nn.NLLLoss()
+
+optimizer = optim.Adam(
+    filter(lambda p: p.requires_grad, model.parameters()),
+    lr=0.001
+) 
+
+9.
+num_epochs = 3
+
+train_losses = []
+valid_losses = []
+train_accuracies = []
+valid_accuracies = []
+
+best_valid_loss = float("inf")
+patience = 2
+patience_counter = 0
+
+for epoch in range(num_epochs):
+
+
+    model.train()
+    running_loss = 0
+    correct = 0
+    total = 0
+
+    for images, targets in dataloaders["train"]:
+
+        images, targets = images.to(device), targets.to(device)
+
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, targets)
+
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item() * images.size(0)
+        correct += (outputs.argmax(1) == targets).sum().item()
+        total += targets.size(0)
+
+    train_loss = running_loss / total
+    train_acc = correct / total
+
+
+    model.eval()
+    running_loss = 0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+
+        for images, targets in dataloaders["valid"]:
+
+            images, targets = images.to(device), targets.to(device)
+
+            outputs = model(images)
+            loss = criterion(outputs, targets)
+
+            running_loss += loss.item() * images.size(0)
+            correct += (outputs.argmax(1) == targets).sum().item()
+            total += targets.size(0)
+
+    valid_loss = running_loss / total
+    valid_acc = correct / total
+
+    train_losses.append(train_loss)
+    valid_losses.append(valid_loss)
+    train_accuracies.append(train_acc)
+    valid_accuracies.append(valid_acc)
+
+    print(f"Epoch {epoch+1}/{num_epochs} | "
+          f"Train Loss: {train_loss:.4f} | "
+          f"Train Acc: {train_acc:.4f} | "
+          f"Valid Loss: {valid_loss:.4f} | "
+          f"Valid Acc: {valid_acc:.4f}")
+
+    if valid_loss < best_valid_loss:
+
+        best_valid_loss = valid_loss
+        patience_counter = 0
+
+        torch.save(model.state_dict(), "/content/best_vgg16_model.pth")
+
+    else:
+        patience_counter += 1
+
+        if patience_counter >= patience:
+            print("Early Stopping Triggered!")
+            break
+
+print("Training Completed!")
+
+10.
+model.load_state_dict(
+    torch.load("/content/best_vgg16_model.pth", map_location=device)
 )
 
-plt.axvline(
-    x=4,
-    linestyle="--",
-    label="Fine-Tuning Starts"
-)
-
+11.
+plt.plot(train_losses, label="Training Loss")
+plt.plot(valid_losses, label="Validation Loss")
+plt.title("Training and Validation Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
-
-plt.title(
-    "MobileNetV2 Transfer Learning Loss"
-)
-
 plt.legend()
 plt.show()
+
+12.
+plt.plot(train_accuracies, label="Training Accuracy")
+plt.plot(valid_accuracies, label="Validation Accuracy")
+plt.title("Training and Validation Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
+
+
+13.
+model.eval()
+correct = 0
+total = 0
+
+with torch.no_grad():
+
+    for images, targets in dataloaders["test"]:
+
+        images, targets = images.to(device), targets.to(device)
+
+        outputs = model(images)
+        predicted = outputs.argmax(1)
+
+        total += targets.size(0)
+        correct += (predicted == targets).sum().item()
+
+test_accuracy = correct / total
+
+print("Test Accuracy:", test_accuracy * 100, "%")
+
+14.
+images, targets = next(iter(dataloaders["test"]))
+
+model.eval()
+
+with torch.no_grad():
+    outputs = model(images.to(device))
+    predictions = outputs.argmax(1).cpu()
+
+plt.figure(figsize=(12, 6))
+
+for i in range(8):
+
+    image = images[i].permute(1, 2, 0).numpy()
+
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+
+    image = np.clip(image * std + mean, 0, 1)
+
+    plt.subplot(2, 4, i + 1)
+    plt.imshow(image)
+
+    plt.title(
+        f"Actual: {class_names[targets[i]]}\n"
+        f"Predicted: {class_names[predictions[i]]}"
+    )
+
+    plt.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+
+15.
+print("=" * 40)
+print("TRANSFER LEARNING - VGG16")
+print("=" * 40)
+
+print("Dataset:", "Caltech101")
+print("Model:", "VGG16")
+print("Classes:", n_classes)
+print("Train Images:", len(data["train"]))
+print("Validation Images:", len(data["valid"]))
+print("Test Images:", len(data["test"]))
+print(f"Test Accuracy: {test_accuracy * 100:.2f}%")
+
+print("=" * 40)
 
